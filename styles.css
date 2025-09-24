@@ -85,7 +85,7 @@ html {
 
 /* Contact Section Styling */
 .contact-section {
-  background: url('images/profile-3.jpg') no-repeat center center/cover;
+  background: red;
   padding: 60px 20px;
   text-align: center;
   font-family: 'Arial', sans-serif;
