@@ -229,5 +229,17 @@ html {
     padding-top: 10px;
     font-size: 13px;
   }
+/* simple styles for inline validation */
+.input-error {
+  border: 1.5px solid #e74c3c !important;
+  outline: none;
+}
+
+.error-msg {
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
 
 
