@@ -85,7 +85,7 @@ html {
 
 /* Contact Section Styling */
 .contact-section {
-  background: lightred;
+  background: linear-gradient(135deg, #fff9c4 40%, #ff6b6b 100%);
   padding: 60px 20px;
   text-align: center;
   font-family: 'Arial', sans-serif;
