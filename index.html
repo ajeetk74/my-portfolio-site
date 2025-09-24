@@ -120,69 +120,153 @@
 
 <!-- Custom Script -->
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const numberInput = document.querySelector("input[name='from_number']");
-    if (numberInput) {
-      numberInput.addEventListener("keydown", function(event) {
-        if (event.key === "Enter") {
-          event.preventDefault();
-        }
-      });
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("contactForm");
+  if (!form) {
+    console.error("contactForm not found in DOM.");
+    return;
+  }
+
+  const inputName = form.querySelector('input[name="from_name"]');
+  const inputEmail = form.querySelector('input[name="reply_to"]');
+  const inputPhone = form.querySelector('input[name="from_number"]');
+  const inputMessage = form.querySelector('textarea[name="message"]');
+
+  if (!inputName || !inputEmail || !inputPhone || !inputMessage) {
+    console.error("One or more form fields are missing. Check name attributes.");
+    return;
+  }
+
+  // Patterns
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phonePattern = /^[0-9]{10}$/; // exactly 10 digits
+
+  // Ensure an error element exists directly after the field's parent
+  function ensureErrorEl(field) {
+    let err = field.parentElement.querySelector(".error-msg");
+    if (!err) {
+      err = document.createElement("div");
+      err.className = "error-msg";
+      field.parentElement.appendChild(err);
     }
+    return err;
+  }
 
-    const form = document.getElementById("contactForm");
-    if (form) {
-      form.addEventListener("submit", function(e) {
-        e.preventDefault();
-
-        // Collect form data
-        const name = document.querySelector('input[name="from_name"]').value.trim();
-        const email = document.querySelector('input[name="reply_to"]').value.trim();
-        const phone = document.querySelector('input[name="from_number"]').value.trim();
-        const message = document.querySelector('textarea[name="message"]').value.trim();
-
-        // Validation rules
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phonePattern = /^[0-9]{10}$/;  // 10 digits only
-
-        if (!name) {
-          alert("⚠️ Please enter your name.");
-          return;
-        }
-        if (!emailPattern.test(email)) {
-          alert("⚠️ Please enter a valid email address.");
-          return;
-        }
-        if (!phonePattern.test(phone)) {
-          alert("⚠️ Please enter a valid 10-digit phone number.");
-          return;
-        }
-        if (!message) {
-          alert("⚠️ Please enter your message.");
-          return;
-        }
-
-        // Prepare data for EmailJS
-        const params = {
-          from_name: name,
-          reply_to: email,
-          from_number: phone,
-          message: message
-        };
-
-        // Send using EmailJS
-        emailjs.send("service_tbd34nq", "template_9ni39zl", params)
-          .then(function(response) {
-            alert("✅ Message sent successfully!");
-            form.reset();
-          })
-          .catch(function(error) {
-            alert("❌ Failed to send message:\n" + JSON.stringify(error));
-            console.error(error);
-          });
-      });
+  // Validation functions (return boolean)
+  function validateFullName() {
+    const value = inputName.value.trim();
+    const err = ensureErrorEl(inputName);
+    if (!value) {
+      err.textContent = "Please enter your name.";
+      inputName.classList.add("input-error");
+      return false;
     }
+    err.textContent = "";
+    inputName.classList.remove("input-error");
+    return true;
+  }
+
+  function validateEmail() {
+    const value = inputEmail.value.trim();
+    const err = ensureErrorEl(inputEmail);
+    if (!emailPattern.test(value)) {
+      err.textContent = "Please enter a valid email address (e.g. abc@xyz.com).";
+      inputEmail.classList.add("input-error");
+      return false;
+    }
+    err.textContent = "";
+    inputEmail.classList.remove("input-error");
+    return true;
+  }
+
+  function validatePhone() {
+    const value = inputPhone.value.trim();
+    const err = ensureErrorEl(inputPhone);
+    if (!phonePattern.test(value)) {
+      err.textContent = "Please enter a valid 10-digit phone number (digits only).";
+      inputPhone.classList.add("input-error");
+      return false;
+    }
+    err.textContent = "";
+    inputPhone.classList.remove("input-error");
+    return true;
+  }
+
+  function validateMessage() {
+    const value = inputMessage.value.trim();
+    const err = ensureErrorEl(inputMessage);
+    if (!value) {
+      err.textContent = "Please enter your message.";
+      inputMessage.classList.add("input-error");
+      return false;
+    }
+    err.textContent = "";
+    inputMessage.classList.remove("input-error");
+    return true;
+  }
+
+  // Live validation while typing
+  inputName.addEventListener("input", validateFullName);
+  inputEmail.addEventListener("input", validateEmail);
+  inputPhone.addEventListener("input", validatePhone);
+  inputMessage.addEventListener("input", validateMessage);
+
+  // Prevent Enter from submitting when inside phone field
+  inputPhone.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") event.preventDefault();
   });
+
+  // Submit handler
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    // Run all validations
+    const okName = validateFullName();
+    const okEmail = validateEmail();
+    const okPhone = validatePhone();
+    const okMessage = validateMessage();
+
+    if (!okName || !okEmail || !okPhone || !okMessage) {
+      // focus first invalid field
+      if (!okName) inputName.focus();
+      else if (!okEmail) inputEmail.focus();
+      else if (!okPhone) inputPhone.focus();
+      else inputMessage.focus();
+      return;
+    }
+
+    // Prepare params for EmailJS
+    const params = {
+      from_name: inputName.value.trim(),
+      reply_to: inputEmail.value.trim(),
+      from_number: inputPhone.value.trim(),
+      message: inputMessage.value.trim(),
+    };
+
+    // Debug: check payload in console
+    console.log("EmailJS params:", params);
+
+    // Send via EmailJS (ensure service/template IDs and init are correct)
+    emailjs
+      .send("service_tbd34nq", "template_9ni39zl", params)
+      .then(function (response) {
+        alert("✅ Message sent successfully!");
+        form.reset();
+
+        // clear inline errors after reset
+        [inputName, inputEmail, inputPhone, inputMessage].forEach((fld) => {
+          const err = fld.parentElement.querySelector(".error-msg");
+          if (err) err.textContent = "";
+          fld.classList.remove("input-error");
+        });
+      })
+      .catch(function (error) {
+        console.error("EmailJS error:", error);
+        alert("❌ Failed to send message. See console for details.");
+      });
+  });
+});
+
 </script>
 <!-- Footer Section -->
 <footer class="footer">
